@@ -16,12 +16,40 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [analyticsRes, usersRes] = await Promise.all([
-        apiGet('/admin/analytics/overview'),
-        apiGet('/admin/users')
+      // Fetch users and mentors to calculate stats
+      const [usersRes, mentorsRes, licensesRes] = await Promise.all([
+        apiGet('/admin/users'),
+        apiGet('/admin/mentors').catch(() => ({ mentors: [] })),
+        apiGet('/admin/licenses').catch(() => ({ licenses: [] }))
       ])
-      setStats(analyticsRes)
-      setRecentUsers((usersRes.users || []).slice(0, 5))
+
+      const users = usersRes.users || []
+      const mentors = mentorsRes.mentors || []
+      const licenses = licensesRes.licenses || []
+
+      // Calculate stats from actual data
+      const calculatedStats = {
+        user_stats: {
+          total: users.length,
+          active: users.filter((u: any) => u.status === 'active').length,
+          pending: users.filter((u: any) => u.status === 'pending').length,
+          paid: users.filter((u: any) => u.payment_status === 'paid').length,
+        },
+        mentor_stats: {
+          total: mentors.length,
+          active: mentors.filter((m: any) => m.status === 'active').length,
+        },
+        license_stats: {
+          total: licenses.length,
+          used: licenses.filter((l: any) => l.status === 'used').length,
+        },
+        revenue_stats: {
+          total_revenue: users.filter((u: any) => u.payment_status === 'paid').length * 99,
+        }
+      }
+
+      setStats(calculatedStats)
+      setRecentUsers(users.slice(0, 5))
     } catch (err) {
       console.error('Failed to load data:', err)
     } finally {
