@@ -5291,11 +5291,11 @@ async def get_user_news(current_user = Depends(get_current_user)):
                 event["signal"] = mentor_signals[event_id]
             formatted_news.append(event)
         
-        # Sort by event datetime (upcoming first) and limit to 20 items
-        formatted_news.sort(key=lambda x: x.get('event_datetime', ''), reverse=False)
+        # Sort by event datetime (most recent first)
+        formatted_news.sort(key=lambda x: x.get('event_datetime', x.get('created_at', '')), reverse=True)
         
-        logger.info(f"Returning {len(formatted_news[:20])} upcoming news items")
-        return {"news": formatted_news[:20]}
+        logger.info(f"Returning {len(formatted_news[:50])} news items (manual + live API)")
+        return {"news": formatted_news[:50]}
         
     except Exception as e:
         logger.error(f"Error fetching news: {str(e)}")
