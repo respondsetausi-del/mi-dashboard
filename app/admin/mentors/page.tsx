@@ -14,6 +14,8 @@ export default function AdminMentors() {
   const [selectedMentor, setSelectedMentor] = useState<any>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
+  const [tempPassword, setTempPassword] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   
   const [newMentor, setNewMentor] = useState({
@@ -219,32 +221,55 @@ export default function AdminMentors() {
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
-                  {mentor.status === 'active' ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    {mentor.status === 'active' ? (
+                      <button
+                        onClick={() => handleDeactivate(mentor)}
+                        className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2"
+                      >
+                        <UserX size={16} />
+                        Deactivate
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleActivate(mentor)}
+                        className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 rounded-xl text-sm font-medium text-green-700 flex items-center justify-center gap-2"
+                      >
+                        <UserCheck size={16} />
+                        Activate
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleDeactivate(mentor)}
-                      className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2"
+                      onClick={() => {
+                        setSelectedMentor(mentor)
+                        setShowDeleteModal(true)
+                      }}
+                      className="px-4 py-2 bg-red-50 hover:bg-red-100 rounded-xl text-red-600"
                     >
-                      <UserX size={16} />
-                      Deactivate
+                      <Trash2 size={16} />
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => handleActivate(mentor)}
-                      className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 rounded-xl text-sm font-medium text-green-700 flex items-center justify-center gap-2"
-                    >
-                      <UserCheck size={16} />
-                      Activate
-                    </button>
-                  )}
+                  </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedMentor(mentor)
-                      setShowDeleteModal(true)
+                      setActionLoading(true)
+                      try {
+                        const response = await apiPost(`/admin/mentors/${mentor._id}/reset-password`, {})
+                        setTempPassword(response.temporary_password)
+                        setShowResetPasswordModal(true)
+                      } catch (err) {
+                        console.error('Failed to reset password:', err)
+                        alert('Failed to reset password. Please try again.')
+                      } finally {
+                        setActionLoading(false)
+                      }
                     }}
-                    className="px-4 py-2 bg-red-50 hover:bg-red-100 rounded-xl text-red-600"
+                    disabled={actionLoading}
+                    className="w-full px-4 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-xl text-sm font-medium text-yellow-700 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <Trash2 size={16} />
+                    <Key size={16} />
+                    {actionLoading ? 'Resetting...' : 'Reset Password'}
                   </button>
                 </div>
               </div>
@@ -354,6 +379,70 @@ export default function AdminMentors() {
               className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-medium text-white disabled:opacity-50"
             >
               {actionLoading ? 'Creating...' : 'Create Mentor'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal
+        isOpen={showResetPasswordModal}
+        onClose={() => {
+          setShowResetPasswordModal(false)
+          setTempPassword('')
+          setSelectedMentor(null)
+        }}
+        title="Password Reset Successful"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <p className="text-sm text-yellow-800 mb-2">
+              <strong>Temporary password generated for:</strong>
+            </p>
+            <p className="text-sm font-medium text-yellow-900 mb-3">
+              {selectedMentor?.email}
+            </p>
+            <div className="bg-white rounded-lg p-3 border border-yellow-300">
+              <p className="text-xs text-gray-500 mb-1">Temporary Password:</p>
+              <p className="text-lg font-mono font-bold text-gray-900 select-all break-all">
+                {tempPassword}
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-800">
+              📧 <strong>Note:</strong> The temporary password has been sent to the mentor's email. 
+              They can also copy it from here.
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-xs text-gray-600">
+              ⚠️ <strong>Important:</strong> The mentor will be required to change this password on their next login.
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(tempPassword)
+                alert('Password copied to clipboard!')
+              }}
+              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-medium text-white"
+            >
+              Copy Password
+            </button>
+            <button
+              onClick={() => {
+                setShowResetPasswordModal(false)
+                setTempPassword('')
+                setSelectedMentor(null)
+              }}
+              className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium"
+            >
+              Close
             </button>
           </div>
         </div>
