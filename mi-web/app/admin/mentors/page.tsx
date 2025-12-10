@@ -105,21 +105,6 @@ export default function AdminMentors() {
     }
   }
 
-  const handleResetPassword = async () => {
-    if (!selectedMentor) return
-    setActionLoading(true)
-    try {
-      const response = await apiPost(`/admin/mentors/${selectedMentor._id}/reset-password`, {})
-      setTempPassword(response.temporary_password)
-      setShowResetPasswordModal(true)
-    } catch (err) {
-      console.error('Failed to reset password:', err)
-      alert('Failed to reset password. Please try again.')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
   const handleCreate = async () => {
     setActionLoading(true)
     try {
