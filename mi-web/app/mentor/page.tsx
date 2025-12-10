@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import StatsCard from '@/components/StatsCard'
 import { apiGet } from '@/lib/api'
-import { Users, UserCheck, DollarSign, Key, Clock, TrendingUp } from 'lucide-react'
+import { Users, UserCheck, DollarSign, Key, Clock, Bell, Calendar } from 'lucide-react'
 
 export default function MentorDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [recentUsers, setRecentUsers] = useState<any[]>([])
+  const [upcomingNews, setUpcomingNews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -16,16 +17,45 @@ export default function MentorDashboard() {
 
   const loadData = async () => {
     try {
-      const [dashboardRes, usersRes] = await Promise.all([
+      const [dashboardRes, usersRes, newsRes] = await Promise.all([
         apiGet('/mentor/dashboard'),
-        apiGet('/mentor/users')
+        apiGet('/mentor/users'),
+        apiGet('/admin/news').catch(() => ({ news: [] }))
       ])
       setStats(dashboardRes)
       setRecentUsers((usersRes.users || []).slice(0, 5))
+      
+      // Get news events
+      const news = newsRes?.news || newsRes || []
+      const sortedNews = news
+        .sort((a: any, b: any) => {
+          const dateA = new Date(a.event_time || a.created_at)
+          const dateB = new Date(b.event_time || b.created_at)
+          return dateB.getTime() - dateA.getTime()
+        })
+        .slice(0, 5)
+      setUpcomingNews(sortedNews)
     } catch (err) {
       console.error('Failed to load data:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const getImpactColor = (impact: string) => {
+    switch (impact?.toLowerCase()) {
+      case 'high': return 'bg-red-100 text-red-700'
+      case 'medium': return 'bg-yellow-100 text-yellow-700'
+      case 'low': return 'bg-green-100 text-green-700'
+      default: return 'bg-gray-100 text-gray-700'
+    }
+  }
+
+  const isUpcoming = (dateStr: string) => {
+    try {
+      return new Date(dateStr) > new Date()
+    } catch {
+      return false
     }
   }
 
@@ -89,43 +119,96 @@ export default function MentorDashboard() {
           </>
         )}
 
-        {/* Recent Users */}
-        <div className="bg-white rounded-2xl border border-gray-200">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Users</h2>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Upcoming News Events */}
+          <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar size={20} className="text-purple-600" />
+                <h2 className="text-lg font-semibold text-gray-900">News Events</h2>
+              </div>
+              <a href="/mentor/news" className="text-sm text-purple-600 hover:underline">View all</a>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {upcomingNews.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Bell size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p>No news events</p>
+                </div>
+              ) : (
+                upcomingNews.map((item: any) => (
+                  <div key={item.id || item._id} className="p-4 hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-gray-900 text-sm">{item.title}</h3>
+                          {isUpcoming(item.event_time) && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                              Upcoming
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {item.currency && (
+                            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                              {item.currency}
+                            </span>
+                          )}
+                          {item.impact && (
+                            <span className={`px-2 py-0.5 rounded-full ${getImpactColor(item.impact)}`}>
+                              {item.impact}
+                            </span>
+                          )}
+                          <span>
+                            {item.event_time ? new Date(item.event_time).toLocaleString() : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-          <div className="divide-y divide-gray-100">
-            {recentUsers.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">No users yet</div>
-            ) : (
-              recentUsers.map((user: any) => (
-                <div key={user._id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 font-medium">
-                        {(user.name || user.email)?.[0]?.toUpperCase()}
+
+          {/* Recent Users */}
+          <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users size={20} className="text-green-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Recent Users</h2>
+              </div>
+              <a href="/mentor/users" className="text-sm text-purple-600 hover:underline">View all</a>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {recentUsers.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No users yet</div>
+              ) : (
+                recentUsers.map((user: any) => (
+                  <div key={user._id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-medium">
+                          {(user.name || user.email)?.[0]?.toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{user.name || 'No name'}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {user.status}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{user.name || 'No name'}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {user.status}
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.payment_status === 'paid' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {user.payment_status || 'unpaid'}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
