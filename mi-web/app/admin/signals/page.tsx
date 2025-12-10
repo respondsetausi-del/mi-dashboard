@@ -6,12 +6,13 @@ import { Send, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function AdminSignals() {
   const [signal, setSignal] = useState({
-    symbol: 'EUR/USD',
-    action: 'BUY',
-    entry_price: '',
-    stop_loss: '',
-    take_profit: '',
-    notes: ''
+    symbol: 'EURUSD',
+    signal_type: 'BUY',
+    indicator: 'Manual Signal',
+    candle_pattern: 'Admin Signal',
+    timeframe: 'H1',
+    notes: '',
+    duration_seconds: 3600
   })
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{success: boolean, message: string} | null>(null)
