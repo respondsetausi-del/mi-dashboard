@@ -1,79 +1,208 @@
 <analysis>
-The trajectory details a comprehensive development cycle for the MI Mobile Indicator application, starting from a foundational architectural refactor to complex feature implementation and persistent bug squashing. The work began by integrating a real-time data feed from the Twelve Data API, replacing a mock data system. This involved significant backend work in , including adding new endpoints, installing Python libraries (, ), and managing API keys.
 
-The engineer then undertook numerous UI/UX and functionality fixes based on user feedback. Key changes included remodeling the Remove Selected feature, fixing a broken drag-and-drop on the , debugging and repopulating the database to fix widespread login failures, and restoring a missing wallpaper. A major user request led to a redesign of the navigation, removing top-level icons for Brokers and News and adding them as persistent tabs in the bottom navigation bar.
+<original_problem_statement>
+The user initially reported several issues with the MI Mobile Indicator application and requested UI/UX improvements. The project's direction then underwent a major architectural pivot: to extract all Admin and Mentor functionalities from the mobile app and move them into a new, separate web-based dashboard. The mobile APK should be streamlined to be for end-users only.
 
-The most critical and recurring issue throughout the trajectory was the backend becoming unresponsive, preventing logins in the built APK. This was eventually root-caused to the preview backend environment sleeping due to inactivity. The previous engineer explained the limitations of the preview environment and proposed several solutions. The user chose Option 1 to implement a Keep-Alive Service to prevent the backend from sleeping. The trajectory concludes just as the engineer is about to begin implementing this final, critical fix.
+The user's key requests included:
+- **MAJOR PIVOT:** Create a separate web dashboard for Admins/Mentors.
+- **Web Dashboard Features:** The user requested a premium dashboard with full management capabilities for users, mentors, licenses, signals, news, and brokers. They also requested a Forex Factory news scraper and a display for upcoming news events.
+- **Mobile App Refactor:** Remove all Admin/Mentor functionality from the mobile app, making it user-only.
+- **Mobile App Permissions:** Add permissions for the app to run in the background, check for signals, and display an overlay bubble over other apps.
+- **Bug Fixes:** Address various bugs on the new web dashboard as they were discovered post-deployment (e.g., incorrect stats, data parsing errors, non-functional forms). Also, fix UI issues on the mobile app (e.g., hiding signal source labels).
 
-The user's primary language is English. The next agent must respond in English.
+**PRODUCT REQUIREMENTS**
+The MI Mobile Indicator is a two-part platform for forex traders:
+1.  **Mobile App (User-Facing):** An Expo/React Native app for end-users to register, view trading signals (with overlay bubble), news, and recommended brokers. The app should run in the background and provide notifications.
+2.  **Web Dashboard (Admin/Mentor-Facing):** A Next.js web application deployed on Render.com for Admins and Mentors to manage users, licenses, branding, brokers, and to send signals and news. The dashboard includes automated news scraping from Forex Factory.
+The backend is a single FastAPI service, also on Render.com, serving both clients.
+</original_problem_statement>
+
+**User's preferred language**: English
+
+**what currently exists?**
+The project is a monorepo with three active components:
+1.  : A FastAPI application with endpoints for mobile and web clients. It includes a new scheduled task to scrape news from Forex Factory. It is deployed on Render.com.
+2.  : The Expo mobile app. It has been updated to be user-only (login for Admin/Mentor removed) and includes new permissions and services for background execution and overlay bubbles. A recent APK has been built with these features.
+3.  : A complete Next.js web application for Admins and Mentors. It has been built from scratch and deployed to Render.com. It includes pages for login, user management, mentor management, licenses, brokers, and sending signals/news. Numerous bug fixes have been applied post-deployment.
+
+**Last working item**:
+- Last item agent was working: The user requested a new feature for the web dashboard: an Upcoming News Events section on the main admin and mentor dashboard pages. The agent was in the process of implementing this. It had created/edited the necessary frontend files ( and ) to fetch news data and display it in a new card component.
+- Status: IN PROGRESS
+- Agent Testing Done: N
+- Which testing method agent to use? manual testing by curl
+- User Testing Done: N
+
+**All Pending/In progress Issue list**:
+- Issue 1: The Upcoming News Events feature is not yet complete. (P0)
+- Issue 2: Mobile app UI polish items are still pending from the original request. (P2)
+- Issue 3: The mobile app codebase contains dead code for Admin and Mentor portals which needs to be removed. (P2)
+
+Issues Detail:
+- Issue 1:
+    - Attempted fixes: The agent has written the frontend code to create a new Upcoming Economic Events card on the admin and mentor dashboards. The code fetches news from the  endpoint and filters for future events.
+    - Next debug checklist:
+        1.  Verify the code in  and  is correct.
+        2.  Push the changes to the  GitHub repository.
+        3.  Wait for the Render.com service to auto-redeploy.
+        4.  Verify the new card appears on the live dashboard and displays the correct upcoming news.
+    - Why fix this issue and what will be achieved with the fix?: To fulfill a direct feature request from the user, enhancing the dashboard's utility for Admins and Mentors.
+    - Status: IN PROGRESS
+    - Is recurring issue? N
+    - Should Test frontend/backend/both after fix? Frontend
+    - Blocked on other issue: None.
+
+- Issue 2:
+    - Attempted fixes: An initial fix to hide signal source labels was implemented in . However, professional text alignment across the app has not been addressed.
+    - Next debug checklist:
+        - Review main screens in the  directory to enforce consistent and professional text alignment (, etc.).
+    - Why fix this issue and what will be achieved with the fix?: To improve the UI/UX polish of the mobile app for the end-user.
+    - Status: NOT STARTED
+    - Is recurring issue? N
+    - Should Test frontend/backend/both after fix? Frontend
+    - Blocked on other issue: None. This is a lower priority.
+
+- Issue 3:
+    - Attempted fixes: None.
+    - Next debug checklist: After the web dashboard is fully stable and verified by the user, perform a cleanup of the  directory. This involves deleting files like , , , and removing related logic from other components.
+    - Why fix this issue and what will be achieved with the fix?: To streamline the mobile app, reduce its bundle size, and improve performance and maintainability.
+    - Status: NOT STARTED
+    - Is recurring issue? N
+    - Should Test frontend/backend/both after fix? Frontend
+    - Blocked on other issue: Blocked by the final user verification of the web dashboard.
+
+**In progress Task List**:
+- Task 1: Finalize and Deploy the Upcoming News Events Feature (P0)
+
+Task Detail:
+- Task 1:
+    - Where to resume: The code has been written and committed locally. The next step is to push the changes to the  GitHub repository and guide the user to check the live Render deployment after it rebuilds.
+    - What will be achieved with this?: The web dashboard will have a new section displaying upcoming high-impact news, completing the user's latest request.
+    - Status: IN PROGRESS
+    - Should Test frontend/backend/both after fix? Frontend
+    - Blocked on something: No.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - **P0:** Get user verification for the latest APK () which includes fixes for news/signal display.
+    - **P1:** Get user verification for all web dashboard features, including the new Brokers page and the upcoming news section (once deployed).
+- **Future Tasks:**
+    - **P1:** Refactor the mobile app () to completely remove all Admin and Mentor code.
+    - **P2:** Address the remaining mobile app UI polish task (professional text alignment).
+
+**Completed work in this session**
+- **Web Dashboard (mi-web):**
+  - **Built from Scratch:** A complete Next.js dashboard was created with a clean, minimal design.
+  - **Deployed to Render:** Guided the user through a complex deployment process, including solving multiple GitHub push issues (secrets, large files, incorrect repository). The dashboard is live at .
+  - **Feature Implementation:** Created pages for Admin and Mentor roles including User Management, Mentor Management, License Generation, Signal/News Sending, and a new Broker Management page.
+  - **Bug Fixing:** Resolved numerous post-deployment bugs reported by the user, including incorrect stats on the dashboard, data parsing for mentors/licenses, and non-functional signal/news forms.
+- **Backend (backend):**
+  - **New Feature:** Implemented an automated Forex Factory news scraper that runs as a scheduled task every hour to populate the news feed.
+  - **API Fixes:** Corrected the news endpoint () to return past events in addition to future ones.
+- **Mobile App (frontend):**
+  - **Refactor for User-Only:** Removed Admin and Mentor login options from the main  screen.
+  - **New Permissions & Services:** Added  and the necessary Android permissions (, , etc.) to allow the app to run in the background and display an overlay bubble.
+  - **UI Fixes:** Updated  to hide the Admin/Mentor Signal labels and fixed the News screen to show all recent news.
+  - **New APKs Built:** Successfully built multiple new APKs incorporating all the changes, with the latest being .
+
+**Earlier issues found/mentioned but not fixed**
+   - Issue 1: Professional Text Alignment in Mobile App
+     - Debug checklist: Review key screens in  and their  definitions to enforce proper  and flexbox alignment for a more polished look.
+     - Why to solve this issue and what will be achieved with this?: Fulfills a user request for better UI/UX.
+     - Should Test frontend/backend/both after fix: Frontend
+     - Is recurring issue? N
+
+**Known issue recurrence from previous fork**
+  - No known recurrences.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Full-Stack:** FastAPI (Python), React Native (Expo), Next.js (React), MongoDB.
+- **Deployment:** The backend () and web frontend () are deployed as separate services on **Render.com** from two different GitHub repositories. They auto-deploy on pushes to the  branch.
+- **Mobile Build:** The mobile app () is built into an Android APK using **EAS Build**.
+- **Background Processing:**  is used in the mobile app to check for signals periodically.
+- **Web Scraping:** The backend uses  and  (implicitly, though not shown) to scrape Forex Factory for news.
+
+**key DB schema**
+- **users**: 
+- **license_keys**: 
+- **brokers**: 
+- **news_events**: 
+- **user_signals**: 
+
+**changes in tech stack**
+- A **Next.js** frontend () was added and is a core part of the architecture.
+- The project is now split across two GitHub repositories and two Render services.
+
+**All files of reference**
+- **Created/Updated:**
+    - ****: The entire directory is new. Key files include ,  (Login), , and all pages under  and . Most recently updated: , .
+    - ****: Heavily modified. Added Forex Factory scraper, scheduled task, and fixed news API logic.
+    - ****: Added multiple Android permissions for background and overlay functionality.
+    - ****: Modified to remove Admin/Mentor login UI.
+    - ****: Modified to hide sender-type labels on signals.
+    - ****: Modified to show all news, not just future events.
+    - ****: New file to define background tasks.
+    - ****: Modified to initialize background services.
+
+**Areas that need refactoring**:
+- The  directory still contains numerous components and screens related to Admin and Mentor roles. These should be removed to reduce app size and complexity once the web dashboard is confirmed as the single source of truth for these roles.
+
+**key api endpoints**
+-  (Login)
+- , , ,  (Admin data endpoints)
+- ,  (Admin action endpoints)
+-  (NEW: Manual trigger for news scraper)
+- ,  (User data endpoints)
+
+**Critical Info for New Agent**
+- The project is now a three-part system: a mobile app, a web dashboard, and a backend.
+- The web dashboard () is **live on Render.com** at .
+- The backend is also live on Render.com. Both services auto-deploy from their respective GitHub repos ( and ).
+- **The user's primary focus is now on the live web dashboard**. They test features directly on the deployed URL and provide feedback.
+- To deploy web dashboard changes, you must push to the  repo. To deploy backend/mobile changes, push to . The agent has struggled with this distinction, so be careful.
+- The latest APK () contains fixes for signal/news display and new background permissions. The user has not yet fully tested this.
+
+**documents created in this job**
+None.
+
+**Last 10 User Messages and any pending user messages**
+1.  : User requested a new APK with the latest changes. (DONE, build  was started).
+2.  : User confirms APK is fine and asks for the permanent web dashboard URL. (DONE).
+3.  : User asks if the free Render plan will cause the dashboard to sleep. (Agent explained it will and offered solutions).
+4.  User provides a screenshot of multiple bugs on the web dashboard (mentors, licenses, revenue, signals, news). (IN PROGRESS - Agent attempted fixes for all).
+5.  : User requests new critical features for the mobile app. (DONE, new APK build  started).
+6.  : User confirms they have pushed changes to GitHub. (Agent proceeded with monitoring).
+7.  : User requests a new Brokers page for the admin dashboard. (DONE, agent added it).
+8.  : User confirms push for the new Brokers page. (Agent confirmed deployment was in progress).
+9.  : User requests the link for the latest APK (). (DONE).
+10. : User's latest feature request for the web dashboard. (IN PROGRESS).
+
+**Project Health Check:**
+- **Broken:** The git push and deployment workflow has been extremely fragile and a source of significant delays and errors. The agent struggled with multiple repos, git history, secrets, and large files. The next agent must be very careful when pushing changes.
+- **Mocked:** No mocked components. Everything is live.
+
+**3rd Party Integrations**
+- **Stripe (Payments)** — requires User API Key.
+- **Twelve Data (Forex Data)** — requires User API Key.
+- **Forex Factory (News)** — via a new backend web scraper (no key required).
+- **Render.com (Hosting)** — for backend and web dashboard deployment.
+- **Expo EAS (Mobile Build Service)**
+
+**Testing status**
+- Testing agent used after significant changes: NO
+- Troubleshoot agent used after agent stuck in loop: YES, to diagnose the initial preview URL issue.
+- Test files created: []
+- Known regressions: None identified, but the user is the primary QA and has found numerous bugs post-deployment.
+
+**Credentials to test flow:**
+- **Admin:**  / 
+- **Mentor:**  /  (or any other mentor from the DB)
+- **User:**  / 
+
+**What agent forgot to execute**
+- The agent is mid-task on implementing the Upcoming News Events feature on the web dashboard. The code is written but not yet pushed or deployed.
+- The long-standing mobile UI polish task (professional text alignment) has not been started.
+
 </analysis>
-
-<product_requirements>
-The MI Mobile Indicator is a mobile application for forex traders designed to provide real-time trading signals.
-
-**Core Features:**
--   **Signal Monitoring**: Users can select a financial instrument and start a monitoring session to receive BUY/SELL/NEUTRAL signals based on technical indicators.
--   **Real-Time Data**: The app integrates with the Twelve Data API to fetch live market data, calculates indicator values (RSI, MACD, etc.), and generates signals every 10 seconds.
--   **Persistent Notifications**: The app uses background tasks and push notifications to alert users of signals even when the app is closed. A floating bubble provides a system-wide signal overlay.
--   **User Management**: The application supports different user roles (User, Mentor, Admin) with a login system.
--   **Content Tabs**: The UI includes dedicated tabs for Home (monitoring control), Signals (list of active monitors), News, and Brokers.
-
-**Problem Statement:**
-The primary blocker is that the standalone APK becomes non-functional after a period of inactivity because users cannot log in. This has been identified as an issue with the preview backend environment, which goes to sleep. The immediate requirement is to implement a solution that ensures the backend remains active 24/7 so the production-ready APK is consistently usable.
-</product_requirements>
-
-<key_technical_concepts>
-- **Full-Stack Architecture**: Expo (React Native) frontend, FastAPI (Python) backend, and MongoDB database.
-- **Real-Time Data**: Integration with **Twelve Data API** for live forex data.
-- **Technical Analysis**: Use of Python libraries (, ) for calculating indicators.
-- **Background Processing**: Use of  and  to run monitoring tasks and send notifications when the app is in the background.
-- **Deployment & Environment**: EAS Build for generating standalone APKs. The core issue revolves around the limitations of the preview/development environment URL (), which is not a persistent production service.
-</key_technical_concepts>
-
-<code_architecture>
-The application follows a monorepo structure with distinct  and  directories.
-
-
-
--   ****
-    -   **Importance**: This is the core of the backend, defining all API endpoints, handling user authentication (login), data models (Pydantic), and interaction with the MongoDB database.
-    -   **Summary of Changes**: Heavily modified to add endpoints for calculating technical indicators (), debugged authentication logic by fixing user roles and status fields (), and fixed database queries for fetching brokers.
-
--   ****
-    -   **Importance**: Defines the main tab-based navigation for the application using .
-    -   **Summary of Changes**: Updated to create a four-tab layout as requested by the user: Home, Signals, News, and Brokers, ensuring a consistent look and feel.
-
--   ****
-    -   **Importance**: The main home screen. It contains the primary UI for starting/stopping signal monitoring, displaying the theme, and integrating background tasks.
-    -   **Summary of Changes**: Icons for News and Brokers were removed from this screen. Logic was added to integrate with  to start and stop background fetching when the user presses the START/STOP button.
-
--   ** & **
-    -   **Importance**: These are the new screens for displaying lists of brokers and news articles, respectively.
-    -   **Summary of Changes**: Created from scratch.  was renamed to , and a new  was created. Both were styled with a solid black background and updated to fetch data from the correct backend endpoints to fix issues where they appeared empty.
-
--   ****
-    -   **Importance**: This new file contains the logic for running tasks in the background.
-    -   **Summary of Changes**: Created to define a background task () using  that will periodically poll for signals and trigger push notifications, allowing the app to function when closed.
-
--   ****
-    -   **Importance**: Configuration file for EAS (Expo Application Services) builds.
-    -   **Summary of Changes**: The  profile was modified to ensure it builds a true standalone APK () rather than one dependent on the Expo Go app.
-</code_architecture>
-
-<pending_tasks>
-- **Implement Keep-Alive Service**: Create a service that periodically pings the preview backend to prevent it from going to sleep, ensuring users can log in to the APK at any time.
-- **Confirm Backend Persistence**: After implementing the keep-alive service, verify that the login functionality remains active over an extended period.
-- **Final APK Build**: Once the backend sleep issue is resolved, perform a final build of the standalone APK and provide the download link to the user.
-</pending_tasks>
-
-<current_work>
-The most recent interactions focused on solving a critical login failure in the standalone APK. The user reported that after some time, the app would no longer allow logins. After extensive investigation, the root cause was identified: the **preview backend environment goes to sleep after a period of inactivity**. This is a known limitation of the development/preview infrastructure.
-
-The previous engineer explained this to the user and presented several options. The user decisively chose **Option 1: Implement a Keep-Alive Service**. This solution involves creating a simple, lightweight service that sends a request to the backend API every few minutes to prevent the server process from being idled.
-
-The last action taken was the AI engineer acknowledging this choice and preparing to implement the Keep-Alive service immediately to provide a 24/7-awake backend for the APK. The goal is to make the current preview environment behave like a persistent production server, thus resolving the login issue permanently.
-</current_work>
-
-<optional_next_step>
-Implement the Keep-Alive Service to ping the backend periodically and prevent it from going to sleep, as per the user's selection of Option 1.
-</optional_next_step>
