@@ -14,6 +14,8 @@ export default function AdminMentors() {
   const [selectedMentor, setSelectedMentor] = useState<any>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
+  const [tempPassword, setTempPassword] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   
   const [newMentor, setNewMentor] = useState({
