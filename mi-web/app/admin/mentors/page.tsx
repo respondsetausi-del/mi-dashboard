@@ -236,32 +236,44 @@ export default function AdminMentors() {
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
-                  {mentor.status === 'active' ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    {mentor.status === 'active' ? (
+                      <button
+                        onClick={() => handleDeactivate(mentor)}
+                        className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2"
+                      >
+                        <UserX size={16} />
+                        Deactivate
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleActivate(mentor)}
+                        className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 rounded-xl text-sm font-medium text-green-700 flex items-center justify-center gap-2"
+                      >
+                        <UserCheck size={16} />
+                        Activate
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleDeactivate(mentor)}
-                      className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2"
+                      onClick={() => {
+                        setSelectedMentor(mentor)
+                        setShowDeleteModal(true)
+                      }}
+                      className="px-4 py-2 bg-red-50 hover:bg-red-100 rounded-xl text-red-600"
                     >
-                      <UserX size={16} />
-                      Deactivate
+                      <Trash2 size={16} />
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => handleActivate(mentor)}
-                      className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 rounded-xl text-sm font-medium text-green-700 flex items-center justify-center gap-2"
-                    >
-                      <UserCheck size={16} />
-                      Activate
-                    </button>
-                  )}
+                  </div>
                   <button
                     onClick={() => {
                       setSelectedMentor(mentor)
-                      setShowDeleteModal(true)
+                      handleResetPassword()
                     }}
-                    className="px-4 py-2 bg-red-50 hover:bg-red-100 rounded-xl text-red-600"
+                    className="w-full px-4 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-xl text-sm font-medium text-yellow-700 flex items-center justify-center gap-2"
                   >
-                    <Trash2 size={16} />
+                    <Key size={16} />
+                    Reset Password
                   </button>
                 </div>
               </div>
