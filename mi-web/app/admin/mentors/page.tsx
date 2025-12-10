@@ -266,14 +266,25 @@ export default function AdminMentors() {
                     </button>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedMentor(mentor)
-                      handleResetPassword()
+                      setActionLoading(true)
+                      try {
+                        const response = await apiPost(`/admin/mentors/${mentor._id}/reset-password`, {})
+                        setTempPassword(response.temporary_password)
+                        setShowResetPasswordModal(true)
+                      } catch (err) {
+                        console.error('Failed to reset password:', err)
+                        alert('Failed to reset password. Please try again.')
+                      } finally {
+                        setActionLoading(false)
+                      }
                     }}
-                    className="w-full px-4 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-xl text-sm font-medium text-yellow-700 flex items-center justify-center gap-2"
+                    disabled={actionLoading}
+                    className="w-full px-4 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-xl text-sm font-medium text-yellow-700 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Key size={16} />
-                    Reset Password
+                    {actionLoading ? 'Resetting...' : 'Reset Password'}
                   </button>
                 </div>
               </div>
