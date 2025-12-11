@@ -29,15 +29,30 @@ export default function Login() {
       const data = await res.json()
 
       if (res.ok) {
+        // Debug logging
+        console.log('Login successful, response:', data)
+        console.log('Role:', role)
+        
+        // Store token and role
         localStorage.setItem('token', data.access_token)
         localStorage.setItem('role', role)
         
         // Store mentor_id if it exists (in mentor object or directly)
         const mentorId = data.mentor?.mentor_id || data.mentor_id
+        console.log('Extracted mentor_id:', mentorId)
         if (mentorId) {
           localStorage.setItem('mentor_id', mentorId)
         }
         
+        // Verify storage
+        console.log('LocalStorage after login:', {
+          token: localStorage.getItem('token')?.substring(0, 20) + '...',
+          role: localStorage.getItem('role'),
+          mentor_id: localStorage.getItem('mentor_id')
+        })
+        
+        // Navigate to role-specific page
+        console.log('Navigating to:', `/${role}`)
         router.push(`/${role}`)
       } else {
         setError(data.detail || 'Invalid credentials')
