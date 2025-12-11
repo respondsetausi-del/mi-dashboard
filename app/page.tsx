@@ -31,9 +31,13 @@ export default function Login() {
       if (res.ok) {
         localStorage.setItem('token', data.access_token)
         localStorage.setItem('role', role)
-        if (data.mentor_id) {
-          localStorage.setItem('mentor_id', data.mentor_id)
+        
+        // Store mentor_id if it exists (in mentor object or directly)
+        const mentorId = data.mentor?.mentor_id || data.mentor_id
+        if (mentorId) {
+          localStorage.setItem('mentor_id', mentorId)
         }
+        
         router.push(`/${role}`)
       } else {
         setError(data.detail || 'Invalid credentials')
