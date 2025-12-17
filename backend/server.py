@@ -1813,7 +1813,10 @@ async def get_admin_stats(current_admin = Depends(get_current_admin)):
     }
 
 @api_router.post("/admin/licenses/generate")
-async def generate_licenses(count: int, current_admin = Depends(get_current_admin)):
+async def generate_licenses(
+    count: int = Body(..., embed=True),
+    current_admin = Depends(get_current_admin)
+):
     """Generate new license keys (admin only)"""
     try:
         if count <= 0 or count > 1000:
