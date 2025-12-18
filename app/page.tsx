@@ -33,6 +33,11 @@ export default function Login() {
         console.log('Login successful, response:', data)
         console.log('Role:', role)
         
+        // Clear any existing storage first to avoid stale data
+        localStorage.removeItem('token')
+        localStorage.removeItem('role')
+        localStorage.removeItem('mentor_id')
+        
         // Store token and role
         localStorage.setItem('token', data.access_token)
         localStorage.setItem('role', role)
@@ -51,9 +56,12 @@ export default function Login() {
           mentor_id: localStorage.getItem('mentor_id')
         })
         
-        // Navigate to role-specific page
+        // Small delay to ensure localStorage is committed before navigation
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        // Navigate to role-specific page using replace to prevent back navigation issues
         console.log('Navigating to:', `/${role}`)
-        router.push(`/${role}`)
+        router.replace(`/${role}`)
       } else {
         setError(data.detail || 'Invalid credentials')
       }
