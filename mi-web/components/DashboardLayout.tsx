@@ -15,11 +15,29 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   useEffect(() => {
     const token = localStorage.getItem('token')
     const storedRole = localStorage.getItem('role')
+    const mentorId = localStorage.getItem('mentor_id')
     
-    if (!token || storedRole !== role) {
+    console.log('DashboardLayout Check:', {
+      hasToken: !!token,
+      storedRole,
+      expectedRole: role,
+      mentorId,
+      match: storedRole === role
+    })
+    
+    if (!token) {
+      console.log('No token found - redirecting to login')
       router.push('/')
       return
     }
+    
+    if (storedRole !== role) {
+      console.log(`Role mismatch: stored="${storedRole}" expected="${role}" - redirecting`)
+      router.push('/')
+      return
+    }
+    
+    console.log('Auth check passed - rendering dashboard')
     setIsLoading(false)
   }, [role, router])
 
