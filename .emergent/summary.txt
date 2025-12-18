@@ -5,15 +5,15 @@ The user initially reported several issues with the MI Mobile Indicator applicat
 
 The user's key requests included:
 - **MAJOR PIVOT:** Create a separate web dashboard for Admins/Mentors.
-- **Web Dashboard Features:** The user requested a premium dashboard with full management capabilities for users, mentors, licenses, signals, news, and brokers. They also requested a Forex Factory news scraper and a display for upcoming news events.
+- **Web Dashboard Features:** The user requested a premium dashboard with full management capabilities for users, mentors,licenses, signals, news, and brokers. They also requested a Forex Factory news scraper and a display for upcoming news events.
 - **Mobile App Refactor:** Remove all Admin/Mentor functionality from the mobile app, making it user-only.
 - **Mobile App Permissions:** Add permissions for the app to run in the background, check for signals, and display an overlay bubble over other apps.
-- **Bug Fixes:** Address various bugs on the new web dashboard as they were discovered post-deployment (e.g., incorrect stats, data parsing errors, non-functional forms). Also, fix UI issues on the mobile app (e.g., hiding signal source labels).
+- **Bug Fixes & Feature Enhancements:** Address various bugs on the new web dashboard as they were discovered (e.g., incorrect stats, data parsing errors, non-functional forms, mentor login issues, Stripe payment flow). Add new features like admin-led password resets and auto-approval on payment.
 
 **PRODUCT REQUIREMENTS**
 The MI Mobile Indicator is a two-part platform for forex traders:
-1.  **Mobile App (User-Facing):** An Expo/React Native app for end-users to register, view trading signals (with overlay bubble), news, and recommended brokers. The app should run in the background and provide notifications.
-2.  **Web Dashboard (Admin/Mentor-Facing):** A Next.js web application deployed on Render.com for Admins and Mentors to manage users, licenses, branding, brokers, and to send signals and news. The dashboard includes automated news scraping from Forex Factory.
+1.  **Mobile App (User-Facing):** An Expo/React Native app for end-users to register, pay for a license (via Stripe web redirect), and view trading signals, news, and recommended brokers. The app should run in the background and provide notifications.
+2.  **Web Dashboard (Admin/Mentor-Facing):** A Next.js web application deployed on Render.com for Admins and Mentors to manage users, licenses, branding, brokers, and to send signals and news. The dashboard includes automated news scraping from Forex Factory and a fallback news API.
 The backend is a single FastAPI service, also on Render.com, serving both clients.
 </original_problem_statement>
 
@@ -21,188 +21,201 @@ The backend is a single FastAPI service, also on Render.com, serving both client
 
 **what currently exists?**
 The project is a monorepo with three active components:
-1.  : A FastAPI application with endpoints for mobile and web clients. It includes a new scheduled task to scrape news from Forex Factory. It is deployed on Render.com.
-2.  : The Expo mobile app. It has been updated to be user-only (login for Admin/Mentor removed) and includes new permissions and services for background execution and overlay bubbles. A recent APK has been built with these features.
-3.  : A complete Next.js web application for Admins and Mentors. It has been built from scratch and deployed to Render.com. It includes pages for login, user management, mentor management, licenses, brokers, and sending signals/news. Numerous bug fixes have been applied post-deployment.
+1.  ****: A FastAPI application on Render.com. It serves both the mobile and web clients. It includes a Forex Factory news scraper, a fallback news API, full user/mentor/license/broker management, and Stripe integration for payments. It has been updated to auto-approve users upon successful payment.
+2.  ****: The Expo mobile app. The latest APK () has been built to use a Stripe web-redirect payment flow, removing a problematic native payment implementation. It displays aggregated news from all backend sources.
+3.  ****: A Next.js web application for Admins/Mentors, live on Render.com. It features dashboards, user/mentor/license management, signal/news sending, and a broker page. It has received numerous feature updates and bug fixes, but a critical mentor login issue persists.
 
 **Last working item**:
-- Last item agent was working: The user requested a new feature for the web dashboard: an Upcoming News Events section on the main admin and mentor dashboard pages. The agent was in the process of implementing this. It had created/edited the necessary frontend files ( and ) to fetch news data and display it in a new card component.
+- Last item agent was working: The user is still experiencing an issue where mentors are kicked out (redirected to login) immediately after a successful login. The agent identified this as a frontend routing issue, likely a race condition in  or an issue with how user/role data is stored and retrieved from localStorage upon login. An attempted fix with enhanced debug logging was pushed.
 - Status: IN PROGRESS
-- Agent Testing Done: N
-- Which testing method agent to use? manual testing by curl
+- Agent Testing Done: N (Fix has been pushed but not verified on a live deployed environment)
+- Which testing method agent to use? Manual testing after confirming deployment on Render.com. The agent needs to guide the user to manually deploy the latest commit, then test the mentor login flow while monitoring the browser console for the new debug logs.
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-- Issue 1: The Upcoming News Events feature is not yet complete. (P0)
-- Issue 2: Mobile app UI polish items are still pending from the original request. (P2)
-- Issue 3: The mobile app codebase contains dead code for Admin and Mentor portals which needs to be removed. (P2)
+- Issue 1: Mentors get kicked out immediately after logging into the web dashboard. (P0)
+- Issue 2: Admin is unable to generate license keys on the web dashboard. (P1)
+- Issue 3: The production backend is using an expired Stripe secret key, which will cause all payment attempts to fail. (P1)
+- Issue 4: Mobile app UI polish items are still pending from the original request. (P3)
+- Issue 5: The mobile app codebase contains dead code for Admin and Mentor portals which needs to be removed. (P3)
 
 Issues Detail:
 - Issue 1:
-    - Attempted fixes: The agent has written the frontend code to create a new Upcoming Economic Events card on the admin and mentor dashboards. The code fetches news from the  endpoint and filters for future events.
+    - Attempted fixes:
+        - The agent first fixed an issue where the  was not being correctly extracted from the API response on the login page (commit ).
+        - When the problem persisted, the agent suspected a race condition in the  component's auth check.
+        - The latest fix involves adding enhanced debug logging to  to trace the values of  and  during the redirect. This was pushed in commit  to the  repository.
     - Next debug checklist:
-        1.  Verify the code in  and  is correct.
-        2.  Push the changes to the  GitHub repository.
-        3.  Wait for the Render.com service to auto-redeploy.
-        4.  Verify the new card appears on the live dashboard and displays the correct upcoming news.
-    - Why fix this issue and what will be achieved with the fix?: To fulfill a direct feature request from the user, enhancing the dashboard's utility for Admins and Mentors.
+        1.  Guide the user to manually deploy the  service on Render.com, specifically ensuring commit  or later is deployed.
+        2.  Once deployed, have the user hard-refresh the login page.
+        3.  Use the provided mentor credentials to log in.
+        4.  Monitor the browser's developer console for the new log messages from  to understand why the redirect is happening.
+        5.  Based on the logs, apply a more robust fix, possibly by delaying the auth check or using a different state management approach for the user session.
+    - Why fix this issue and what will be achieved with the fix?: This is a critical bug blocking all mentor functionality. Fixing it will restore access for mentors.
     - Status: IN PROGRESS
-    - Is recurring issue? N
+    - Is recurring issue? Y
     - Should Test frontend/backend/both after fix? Frontend
     - Blocked on other issue: None.
 
 - Issue 2:
-    - Attempted fixes: An initial fix to hide signal source labels was implemented in . However, professional text alignment across the app has not been addressed.
+    - Attempted fixes: The agent identified that the backend  endpoint expected a query parameter while the frontend sent a JSON body, and the  GET endpoint had an incorrect response wrapper. A fix for both was pushed to the backend in commit .
     - Next debug checklist:
-        - Review main screens in the  directory to enforce consistent and professional text alignment (, etc.).
-    - Why fix this issue and what will be achieved with the fix?: To improve the UI/UX polish of the mobile app for the end-user.
-    - Status: NOT STARTED
+        1. Verify that the  service has deployed commit  or later.
+        2. Log in as admin on the web dashboard and navigate to the Licenses page.
+        3. Attempt to generate a new batch of keys.
+        4. Verify that the new keys appear in the list without errors.
+    - Why fix this issue and what will be achieved with the fix?: Admins cannot create new license keys, which is essential for onboarding new users.
+    - Status: TESTING PENDING
     - Is recurring issue? N
-    - Should Test frontend/backend/both after fix? Frontend
-    - Blocked on other issue: None. This is a lower priority.
+    - Should Test frontend/backend/both after fix? Both (Backend fix, frontend verification)
+    - Blocked on other issue: None.
 
 - Issue 3:
-    - Attempted fixes: None.
-    - Next debug checklist: After the web dashboard is fully stable and verified by the user, perform a cleanup of the  directory. This involves deleting files like , , , and removing related logic from other components.
-    - Why fix this issue and what will be achieved with the fix?: To streamline the mobile app, reduce its bundle size, and improve performance and maintainability.
-    - Status: NOT STARTED
+    - Attempted fixes: The user provided a new valid Stripe secret key (). The agent confirmed it works but could not commit it to the repo (as  is git-ignored). The agent instructed the user to manually update the  environment variable in the Render.com dashboard for the  service.
+    - Next debug checklist:
+        1.  Confirm with the user that they have updated the  on Render.
+        2.  Test the payment flow using a test user account on the latest mobile APK.
+    - Why fix this issue and what will be achieved with the fix?: All user payments are currently failing. This will restore the primary monetization flow.
+    - Status: BLOCKED (Pending user action)
     - Is recurring issue? N
-    - Should Test frontend/backend/both after fix? Frontend
-    - Blocked on other issue: Blocked by the final user verification of the web dashboard.
+    - Should Test frontend/backend/both after fix? Backend (via frontend payment flow)
+    - Blocked on other issue: None.
+
+- Issue 4 & 5 are lower priority and have not been started.
 
 **In progress Task List**:
-- Task 1: Finalize and Deploy the Upcoming News Events Feature (P0)
-
-Task Detail:
-- Task 1:
-    - Where to resume: The code has been written and committed locally. The next step is to push the changes to the  GitHub repository and guide the user to check the live Render deployment after it rebuilds.
-    - What will be achieved with this?: The web dashboard will have a new section displaying upcoming high-impact news, completing the user's latest request.
-    - Status: IN PROGRESS
-    - Should Test frontend/backend/both after fix? Frontend
-    - Blocked on something: No.
+- Task 1: Deploy and Verify Mentor Login Fix (P0)
+ Task Detail:
+  - Task 1:
+     - Where to resume: Guide the user to perform a Manual Deploy of the  service on Render.com to ensure the latest commit () is live.
+     - What will be achieved with this?: Resolve the critical bug preventing mentors from accessing the dashboard.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Frontend
+     - Blocked on something: User action is required to trigger the deployment on Render.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P0:** Get user verification for the latest APK () which includes fixes for news/signal display.
-    - **P1:** Get user verification for all web dashboard features, including the new Brokers page and the upcoming news section (once deployed).
+    - **P1:** Get user confirmation that the Stripe secret key has been updated on the Render backend service.
+    - **P1:** Verify that the fix for license key generation is working on the live admin dashboard.
 - **Future Tasks:**
-    - **P1:** Refactor the mobile app () to completely remove all Admin and Mentor code.
-    - **P2:** Address the remaining mobile app UI polish task (professional text alignment).
+    - **P2:** Refactor the mobile app () to completely remove all Admin and Mentor code.
+    - **P3:** Address the remaining mobile app UI polish task (professional text alignment).
 
 **Completed work in this session**
-- **Web Dashboard (mi-web):**
-  - **Built from Scratch:** A complete Next.js dashboard was created with a clean, minimal design.
-  - **Deployed to Render:** Guided the user through a complex deployment process, including solving multiple GitHub push issues (secrets, large files, incorrect repository). The dashboard is live at .
-  - **Feature Implementation:** Created pages for Admin and Mentor roles including User Management, Mentor Management, License Generation, Signal/News Sending, and a new Broker Management page.
-  - **Bug Fixing:** Resolved numerous post-deployment bugs reported by the user, including incorrect stats on the dashboard, data parsing for mentors/licenses, and non-functional signal/news forms.
-- **Backend (backend):**
-  - **New Feature:** Implemented an automated Forex Factory news scraper that runs as a scheduled task every hour to populate the news feed.
-  - **API Fixes:** Corrected the news endpoint () to return past events in addition to future ones.
-- **Mobile App (frontend):**
-  - **Refactor for User-Only:** Removed Admin and Mentor login options from the main  screen.
-  - **New Permissions & Services:** Added  and the necessary Android permissions (, , etc.) to allow the app to run in the background and display an overlay bubble.
-  - **UI Fixes:** Updated  to hide the Admin/Mentor Signal labels and fixed the News screen to show all recent news.
-  - **New APKs Built:** Successfully built multiple new APKs incorporating all the changes, with the latest being .
+- **Web Dashboard Features & Fixes:**
+  - **Upcoming News Events Section**: Successfully added to Admin and Mentor dashboards.
+  - **Apply as Mentor Feature**: A full registration flow was added, allowing new mentors to apply.
+  - **Admin Password Reset for Mentors**: Implemented a Reset Password button on the Admin's mentor management page to generate temporary passwords.
+  - **Mentor Login Fix (Attempted)**: Corrected the parsing of the API response on the login page and pushed a further debugging-focused fix for the redirect issue.
+  - **License Generation/Display Fix**: Pushed a backend fix to correct the API request/response format for license management.
+- **Backend Enhancements:**
+  - **Enhanced News Aggregation**: Backend now merges news from the Forex Factory scraper, manual entries, and a new fallback news API, serving them to both web and mobile clients.
+  - **Stripe Auto-Approval**: The payment webhook was modified to automatically set a user's status to  upon successful payment.
+- **Mobile App (Frontend):**
+  - **Stripe Native Payment (Implemented & Reverted)**: A full native in-app payment flow was built. Due to recurring Invalid API Key errors, this was reverted at the user's request back to the more stable web redirect flow.
+  - **Mobile News Display Fix**: The mobile app's news endpoint was fixed to show all news (including past events), not just upcoming ones.
+  - **Multiple APK Builds**: Built and delivered several new APKs, culminating in the latest version () which uses the restored web redirect payment flow.
+- **User & Mentor Management:**
+  - Created multiple new, fully-functional test users and mentors with known credentials for testing purposes.
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Professional Text Alignment in Mobile App
-     - Debug checklist: Review key screens in  and their  definitions to enforce proper  and flexbox alignment for a more polished look.
-     - Why to solve this issue and what will be achieved with this?: Fulfills a user request for better UI/UX.
-     - Should Test frontend/backend/both after fix: Frontend
-     - Is recurring issue? N
+- The mobile app UI polish (professional text alignment) and dead code removal tasks from the initial problem statement have not been addressed.
 
 **Known issue recurrence from previous fork**
-  - No known recurrences.
+  - **Render Deployment Flakiness**: The issue of Render services not auto-deploying after a push has occurred multiple times in this session for both the frontend and backend services. The workaround is to guide the user to perform a Manual Deploy on the Render.com dashboard. This is a critical operational pattern the next agent must know.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Full-Stack:** FastAPI (Python), React Native (Expo), Next.js (React), MongoDB.
-- **Deployment:** The backend () and web frontend () are deployed as separate services on **Render.com** from two different GitHub repositories. They auto-deploy on pushes to the  branch.
-- **Mobile Build:** The mobile app () is built into an Android APK using **EAS Build**.
-- **Background Processing:**  is used in the mobile app to check for signals periodically.
-- **Web Scraping:** The backend uses  and  (implicitly, though not shown) to scrape Forex Factory for news.
+- **Full-Stack:** FastAPI (Python), React Native (Expo), Next.js (React).
+- **Deployment:** Backend () and web frontend () are separate services on **Render.com**, deployed from two different GitHub repositories. Manual deployment is often required.
+- **Payments:** Stripe is used for payments. The mobile app has reverted to a **web redirect (Checkout)** flow. The backend handles payment status via a webhook and a status-check endpoint.
+- **Authentication:** JWT-based authentication for Admin, Mentor, and User roles. A critical bug exists in the Mentor login flow on the frontend.
 
 **key DB schema**
-- **users**: 
-- **license_keys**: 
-- **brokers**: 
-- **news_events**: 
-- **user_signals**: 
+  - **users**:  (the  field is now critical for the auto-approval flow).
+  - **mentors**: 
+  - **license_keys**: 
+  - **news_events**: 
 
 **changes in tech stack**
-- A **Next.js** frontend () was added and is a core part of the architecture.
-- The project is now split across two GitHub repositories and two Render services.
+- No fundamental changes in this session. The agent attempted to integrate the native Stripe React Native SDK but reverted the changes.
 
 **All files of reference**
-- **Created/Updated:**
-    - ****: The entire directory is new. Key files include ,  (Login), , and all pages under  and . Most recently updated: , .
-    - ****: Heavily modified. Added Forex Factory scraper, scheduled task, and fixed news API logic.
-    - ****: Added multiple Android permissions for background and overlay functionality.
-    - ****: Modified to remove Admin/Mentor login UI.
-    - ****: Modified to hide sender-type labels on signals.
-    - ****: Modified to show all news, not just future events.
-    - ****: New file to define background tasks.
-    - ****: Modified to initialize background services.
+- ****: Heavily modified to add/fix news aggregation, license generation, Stripe auto-approval, and mentor password reset.
+- ****: Modified to add an Apply as Mentor button and to fix/debug the mentor login logic.
+- ****: Modified to add a Reset Password button, modal, and handler.
+- ****: Modified to add debug logging to diagnose the mentor kick out issue.
+- ****: New file created for the mentor application form.
+- ****: File was completely replaced with a native payment implementation, then reverted to its original web-redirect implementation.
 
 **Areas that need refactoring**:
-- The  directory still contains numerous components and screens related to Admin and Mentor roles. These should be removed to reduce app size and complexity once the web dashboard is confirmed as the single source of truth for these roles.
+- The mobile app  directory still contains unused Admin/Mentor components and screens that should be removed to reduce app size.
+- The file  is now dead code and should be deleted.
 
 **key api endpoints**
--  (Login)
-- , , ,  (Admin data endpoints)
-- ,  (Admin action endpoints)
--  (NEW: Manual trigger for news scraper)
-- ,  (User data endpoints)
+-  (Backend works, but frontend has a bug post-login)
+-  (Used for Apply as Mentor flow)
+-  (Backend endpoint for the new Admin feature)
+-  (Backend fix pushed, awaiting verification)
+-  (Updated to aggregate all news sources)
+-  (Updated to include all news sources and remove past-event filter)
+-  (Updated to set  on success)
+-  (Updated to set  on success)
 
 **Critical Info for New Agent**
-- The project is now a three-part system: a mobile app, a web dashboard, and a backend.
-- The web dashboard () is **live on Render.com** at .
-- The backend is also live on Render.com. Both services auto-deploy from their respective GitHub repos ( and ).
-- **The user's primary focus is now on the live web dashboard**. They test features directly on the deployed URL and provide feedback.
-- To deploy web dashboard changes, you must push to the  repo. To deploy backend/mobile changes, push to . The agent has struggled with this distinction, so be careful.
-- The latest APK () contains fixes for signal/news display and new background permissions. The user has not yet fully tested this.
+- **Mentor Login is the #1 Priority:** The user is blocked by this. A fix has been pushed (commit  to  repo), but you **MUST** guide the user to **Manually Deploy** on Render.com and then verify the fix by checking the browser console logs. Do not assume auto-deploy worked.
+- **Render Deployment is Unreliable:** Expect to instruct the user to perform a Manual Deploy -> Deploy latest commit for both the  (frontend) and  services whenever you push a change.
+- **Stripe Secret Key is EXPIRED on Production:** Payments will fail until the user updates the  in the Environment Variables section of the  service on Render. This is a user-gated action.
+- **Stripe Native Payments were REVERTED:** Do not attempt to re-implement native in-app payments. The user requested a return to the web redirect (Checkout) flow, which is what the latest APK contains.
 
 **documents created in this job**
-None.
+  - /app/IMPLEMENTATION_SUMMARY.md
 
 **Last 10 User Messages and any pending user messages**
-1.  : User requested a new APK with the latest changes. (DONE, build  was started).
-2.  : User confirms APK is fine and asks for the permanent web dashboard URL. (DONE).
-3.  : User asks if the free Render plan will cause the dashboard to sleep. (Agent explained it will and offered solutions).
-4.  User provides a screenshot of multiple bugs on the web dashboard (mentors, licenses, revenue, signals, news). (IN PROGRESS - Agent attempted fixes for all).
-5.  : User requests new critical features for the mobile app. (DONE, new APK build  started).
-6.  : User confirms they have pushed changes to GitHub. (Agent proceeded with monitoring).
-7.  : User requests a new Brokers page for the admin dashboard. (DONE, agent added it).
-8.  : User confirms push for the new Brokers page. (Agent confirmed deployment was in progress).
-9.  : User requests the link for the latest APK (). (DONE).
-10. : User's latest feature request for the web dashboard. (IN PROGRESS).
+1.  : User requested login credentials for testing. (DONE - agent created and provided several test user accounts).
+2.  : User requested mentor credentials. (DONE - agent created and provided two test mentor accounts).
+3.  : User reported the critical, recurring mentor login bug. (IN PROGRESS - agent pushed a debug-focused fix, awaiting deployment/verification).
+4.  : User asked how to deploy the changes on Render. (DONE - agent provided detailed step-by-step instructions).
+5.  : User reported a bug with license key generation. (IN PROGRESS - agent pushed a backend fix, awaiting deployment/verification).
+6.  : User reported a payment error. (IN PROGRESS - agent identified an expired secret key and instructed the user how to update it on Render).
+7.  : User requested that successful payments should auto-approve users. (DONE - agent implemented and pushed the backend change).
+8.  : User requested native in-app payments. (DONE, but then REVERTED).
+9.  : User requested an APK with the native payment feature. (DONE).
+10. : User reported the native payment wasn't the default flow. (DONE, fixed in a subsequent build, which was then also made obsolete by the final revert).
+...
+- **Final user requests in session:** , , . The mentor login issue is the main pending item.
 
 **Project Health Check:**
-- **Broken:** The git push and deployment workflow has been extremely fragile and a source of significant delays and errors. The agent struggled with multiple repos, git history, secrets, and large files. The next agent must be very careful when pushing changes.
-- **Mocked:** No mocked components. Everything is live.
+- **Broken:**
+    - The Mentor Login flow on the web dashboard is critically broken.
+    - The production payment system is broken due to an expired Stripe API key on Render.
+- **Mocked:** No mocked components.
 
 **3rd Party Integrations**
-- **Stripe (Payments)** — requires User API Key.
-- **Twelve Data (Forex Data)** — requires User API Key.
-- **Forex Factory (News)** — via a new backend web scraper (no key required).
-- **Render.com (Hosting)** — for backend and web dashboard deployment.
-- **Expo EAS (Mobile Build Service)**
+- **Stripe (Payments)** — requires User API Key. The production key on Render is EXPIRED and needs to be updated by the user. The system uses the web redirect (Checkout) flow.
+- **Render.com (Hosting)** — for backend and web dashboard deployment. Auto-deploy is unreliable; manual deployment is often necessary.
+- **Expo EAS (Mobile Build Service)** — Used for building APKs.
+- **Forex Factory (News)** — via a backend web scraper (no key required).
+- **Financial Modeling Prep (News)** - Added as a fallback news source in the backend.
 
 **Testing status**
-- Testing agent used after significant changes: NO
-- Troubleshoot agent used after agent stuck in loop: YES, to diagnose the initial preview URL issue.
-- Test files created: []
-- Known regressions: None identified, but the user is the primary QA and has found numerous bugs post-deployment.
+  - Testing agent used after significant changes: NO
+  - Troubleshoot agent used after agent stuck in loop: YES, to diagnose an initial MongoDB issue.
+  - Test files created: []
+  - Known regressions: None.
 
 **Credentials to test flow:**
 - **Admin:**  / 
-- **Mentor:**  /  (or any other mentor from the DB)
-- **User:**  / 
+- **Mentor (New/Working):**  / 
+- **Mentor (New/Working):**  / 
+- **User (Primary Test):**  / 
+- **User (New/Working):**  / 
+- **User (New/Working):**  / 
 
 **What agent forgot to execute**
-- The agent is mid-task on implementing the Upcoming News Events feature on the web dashboard. The code is written but not yet pushed or deployed.
-- The long-standing mobile UI polish task (professional text alignment) has not been started.
+- The agent did not follow up to ensure the fix for license generation (pushed in commit ) was deployed and working. This remains a pending issue.
+- The long-standing mobile UI polish and dead code removal tasks were not addressed.
 
 </analysis>
