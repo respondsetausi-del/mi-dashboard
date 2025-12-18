@@ -3352,11 +3352,12 @@ async def get_payment_status(
                     "$set": {
                         "payment_status": "paid",
                         "payment_date": datetime.utcnow(),
-                        "status": "active"  # Automatically activate user after payment
+                        "status": "active",  # Automatically activate user after payment
+                        "approved": True  # Auto-approve user after successful payment
                     }
                 }
             )
-            logger.info(f"✅ Payment completed for user {user_id} - Automatically activated with full access")
+            logger.info(f"✅ Payment completed for user {user_id} - Automatically approved and activated with full access")
         
         return PaymentStatusResponse(
             payment_status=payment_status,
