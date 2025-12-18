@@ -20,7 +20,7 @@ export default function MentorDashboard() {
       const [dashboardRes, usersRes, newsRes] = await Promise.all([
         apiGet('/mentor/dashboard'),
         apiGet('/mentor/users'),
-        apiGet('/admin/news').catch(() => ({ news: [] }))
+        apiGet('/mentor/upcoming-news').catch(() => [])  // Use mentor-specific news endpoint
       ])
       setStats(dashboardRes)
       setRecentUsers((usersRes.users || []).slice(0, 5))
