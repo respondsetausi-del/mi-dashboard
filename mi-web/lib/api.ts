@@ -17,10 +17,19 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
     headers,
   })
   
-  if (response.status === 401 || response.status === 403) {
-    localStorage.clear()
-    window.location.href = '/'
-    throw new Error('Unauthorized')
+  // Only redirect on 401 for role-specific dashboard endpoints
+  // Don't redirect for cross-role endpoints (like mentor calling admin/news)
+  if (response.status === 401) {
+    const role = localStorage.getItem('role')
+    const isRoleSpecificEndpoint = endpoint.startsWith(`/${role}/`)
+    
+    // Only clear and redirect if the user's own role endpoint fails
+    if (isRoleSpecificEndpoint) {
+      console.log('Auth failed for role-specific endpoint, redirecting to login')
+      localStorage.clear()
+      window.location.href = '/'
+      throw new Error('Unauthorized')
+    }
   }
   
   return response
