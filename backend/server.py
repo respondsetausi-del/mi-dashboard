@@ -3482,11 +3482,12 @@ async def stripe_webhook(request: Request):
                             "$set": {
                                 "payment_status": "paid",
                                 "payment_date": datetime.utcnow(),
-                                "status": "active"  # Automatically activate user after payment
+                                "status": "active",  # Automatically activate user after payment
+                                "approved": True  # Auto-approve user after successful payment
                             }
                         }
                     )
-                    logger.info(f"✅ Payment successful - User {user_id} automatically activated with full access")
+                    logger.info(f"✅ Payment successful - User {user_id} automatically approved and activated with full access")
         
         return {"status": "success"}
         
