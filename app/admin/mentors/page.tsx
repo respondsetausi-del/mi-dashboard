@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import Modal from '@/components/Modal'
-import { apiGet, apiPost, apiDelete } from '@/lib/api'
-import { Search, UserPlus, UserCheck, UserX, Trash2, Key, RefreshCw, Users } from 'lucide-react'
+import { apiGet, apiPost, apiDelete, apiPut } from '@/lib/api'
+import { Search, UserPlus, UserCheck, UserX, Trash2, Key, RefreshCw, Users, Settings } from 'lucide-react'
 
 export default function AdminMentors() {
   const [mentors, setMentors] = useState<any[]>([])
@@ -15,7 +15,9 @@ export default function AdminMentors() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
+  const [showEditMaxUsersModal, setShowEditMaxUsersModal] = useState(false)
   const [tempPassword, setTempPassword] = useState('')
+  const [newMaxUsers, setNewMaxUsers] = useState(50)
   const [actionLoading, setActionLoading] = useState(false)
   
   const [newMentor, setNewMentor] = useState({
@@ -119,6 +121,22 @@ export default function AdminMentors() {
     }
   }
 
+  const handleUpdateMaxUsers = async () => {
+    if (!selectedMentor) return
+    setActionLoading(true)
+    try {
+      await apiPut(`/admin/mentors/${selectedMentor._id}/max-users`, { max_users: newMaxUsers })
+      setShowEditMaxUsersModal(false)
+      setSelectedMentor(null)
+      loadMentors()
+    } catch (err) {
+      console.error('Failed to update max users:', err)
+      alert('Failed to update max users. Please try again.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   return (
     <DashboardLayout role="admin">
       <div className="space-y-6">
@@ -215,9 +233,19 @@ export default function AdminMentors() {
                     <p className="text-2xl font-bold text-gray-900">{mentor.user_count || 0}</p>
                     <p className="text-xs text-gray-500">Users</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                  <div 
+                    className="bg-gray-50 rounded-xl p-3 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors"
+                    onClick={() => {
+                      setSelectedMentor(mentor)
+                      setNewMaxUsers(mentor.max_users || 50)
+                      setShowEditMaxUsersModal(true)
+                    }}
+                    title="Click to edit max users"
+                  >
                     <p className="text-2xl font-bold text-gray-900">{mentor.max_users || 50}</p>
-                    <p className="text-xs text-gray-500">Max Users</p>
+                    <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                      Max Users <Settings size={10} />
+                    </p>
                   </div>
                 </div>
                 
@@ -443,6 +471,80 @@ export default function AdminMentors() {
               className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium"
             >
               Close
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Max Users Modal */}
+      <Modal
+        isOpen={showEditMaxUsersModal}
+        onClose={() => {
+          setShowEditMaxUsersModal(false)
+          setSelectedMentor(null)
+        }}
+        title="Edit Max Users"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Mentor:</strong> {selectedMentor?.name || selectedMentor?.email}
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Current users: {selectedMentor?.user_count || 0} / {selectedMentor?.max_users || 50}
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              New Max Users Limit
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={10000}
+              value={newMaxUsers}
+              onChange={(e) => setNewMaxUsers(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-2xl font-bold text-center"
+            />
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Enter a value between 1 and 10,000
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            {[50, 100, 200, 500, 1000].map((val) => (
+              <button
+                key={val}
+                onClick={() => setNewMaxUsers(val)}
+                className={`flex-1 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  newMaxUsers === val 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => {
+                setShowEditMaxUsersModal(false)
+                setSelectedMentor(null)
+              }}
+              className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateMaxUsers}
+              disabled={actionLoading}
+              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-medium text-white disabled:opacity-50"
+            >
+              {actionLoading ? 'Updating...' : 'Update Max Users'}
             </button>
           </div>
         </div>

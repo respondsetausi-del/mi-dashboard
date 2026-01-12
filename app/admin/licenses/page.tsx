@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import { apiGet, apiPost } from '@/lib/api'
-import { Key, Plus, Search, RefreshCw, Copy, Check } from 'lucide-react'
+import { Key, Plus, Search, RefreshCw, Copy, Check, RotateCcw } from 'lucide-react'
 
 export default function AdminLicenses() {
   const [licenses, setLicenses] = useState<any[]>([])
@@ -13,6 +13,11 @@ export default function AdminLicenses() {
   const [generating, setGenerating] = useState(false)
   const [generateCount, setGenerateCount] = useState(1)
   const [copiedKey, setCopiedKey] = useState('')
+  
+  // Reactivate license state
+  const [reactivateKey, setReactivateKey] = useState('')
+  const [reactivating, setReactivating] = useState(false)
+  const [reactivateResult, setReactivateResult] = useState<{success: boolean, message: string} | null>(null)
 
   useEffect(() => {
     loadLicenses()
@@ -59,6 +64,22 @@ export default function AdminLicenses() {
       console.error('Failed to generate licenses:', err)
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const reactivateLicense = async () => {
+    if (!reactivateKey.trim()) return
+    setReactivating(true)
+    setReactivateResult(null)
+    try {
+      const response = await apiPost('/admin/licenses/reactivate', { license_key: reactivateKey.trim() })
+      setReactivateResult({ success: true, message: response.message || 'License reactivated successfully!' })
+      setReactivateKey('')
+      loadLicenses()
+    } catch (err: any) {
+      setReactivateResult({ success: false, message: err.message || 'Failed to reactivate license' })
+    } finally {
+      setReactivating(false)
     }
   }
 
@@ -117,6 +138,43 @@ export default function AdminLicenses() {
               {generating ? 'Generating...' : `Generate ${generateCount} License${generateCount > 1 ? 's' : ''}`}
             </button>
           </div>
+        </div>
+
+        {/* Reactivate License Section */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <RotateCcw size={20} className="text-orange-600" />
+            Reactivate License Key
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Enter a used license key to make it available again. The previous user will lose access.
+          </p>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={reactivateKey}
+                onChange={(e) => setReactivateKey(e.target.value.toUpperCase())}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono uppercase"
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+              />
+            </div>
+            <button
+              onClick={reactivateLicense}
+              disabled={reactivating || !reactivateKey.trim()}
+              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-xl font-medium text-white flex items-center gap-2 disabled:opacity-50"
+            >
+              <RotateCcw size={18} />
+              {reactivating ? 'Reactivating...' : 'Reactivate'}
+            </button>
+          </div>
+          {reactivateResult && (
+            <div className={`mt-4 p-4 rounded-xl ${reactivateResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              <p className={`text-sm ${reactivateResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                {reactivateResult.success ? '✅' : '❌'} {reactivateResult.message}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
