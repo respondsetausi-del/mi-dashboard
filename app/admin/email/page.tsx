@@ -285,6 +285,11 @@ export default function AdminEmail() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{email.subject}</p>
                         <p className="text-sm text-gray-500 truncate">{email.to}</p>
+                        {email.temp_password && (
+                          <p className="text-xs mt-1 font-mono bg-yellow-100 text-yellow-800 px-2 py-1 rounded inline-block">
+                            Temp Pass: {email.temp_password}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 ml-2">
                         {email.status === 'sent' ? (
