@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import Modal from '@/components/Modal'
 import { apiGet, apiPost, apiDelete } from '@/lib/api'
-import { Search, UserCheck, UserX, Trash2, Key, MoreVertical, RefreshCw, Download, Filter } from 'lucide-react'
+import { Search, UserCheck, UserX, Trash2, Key, MoreVertical, RefreshCw, Download, Filter, UserPlus, Eye, EyeOff } from 'lucide-react'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([])
@@ -14,8 +14,19 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [tempPassword, setTempPassword] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  
+  // Add User form state
+  const [newUserEmail, setNewUserEmail] = useState('')
+  const [newUserPassword, setNewUserPassword] = useState('')
+  const [newUserName, setNewUserName] = useState('')
+  const [newUserMentorId, setNewUserMentorId] = useState('')
+  const [newUserStatus, setNewUserStatus] = useState('active')
+  const [newUserPaymentStatus, setNewUserPaymentStatus] = useState('paid')
+  const [showPassword, setShowPassword] = useState(false)
+  const [addUserError, setAddUserError] = useState('')
 
   useEffect(() => {
     loadUsers()
@@ -107,6 +118,48 @@ export default function AdminUsers() {
     }
   }
 
+  const handleAddUser = async () => {
+    if (!newUserEmail || !newUserPassword) {
+      setAddUserError('Email and password are required')
+      return
+    }
+    
+    if (newUserPassword.length < 6) {
+      setAddUserError('Password must be at least 6 characters')
+      return
+    }
+    
+    setActionLoading(true)
+    setAddUserError('')
+    try {
+      await apiPost('/admin/users/create', {
+        email: newUserEmail,
+        password: newUserPassword,
+        name: newUserName,
+        mentor_id: newUserMentorId,
+        status: newUserStatus,
+        payment_status: newUserPaymentStatus
+      })
+      
+      // Reset form and close modal
+      setNewUserEmail('')
+      setNewUserPassword('')
+      setNewUserName('')
+      setNewUserMentorId('')
+      setNewUserStatus('active')
+      setNewUserPaymentStatus('paid')
+      setShowAddUserModal(false)
+      
+      // Reload users list
+      loadUsers()
+    } catch (err: any) {
+      console.error('Failed to add user:', err)
+      setAddUserError(err?.message || 'Failed to create user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const exportCSV = async () => {
     try {
       const data = await apiGet('/admin/export/users')
@@ -137,6 +190,13 @@ export default function AdminUsers() {
             >
               <RefreshCw size={18} />
               Refresh
+            </button>
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-xl font-medium text-white flex items-center gap-2"
+            >
+              <UserPlus size={18} />
+              Add User
             </button>
             <button
               onClick={exportCSV}
@@ -358,6 +418,129 @@ export default function AdminUsers() {
               </div>
             </>
           )}
+        </div>
+      </Modal>
+
+      {/* Add User Modal */}
+      <Modal
+        isOpen={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false)
+          setAddUserError('')
+        }}
+        title="Add New User"
+        size="md"
+      >
+        <div className="space-y-4">
+          {addUserError && (
+            <div className="p-3 bg-red-100 border border-red-300 rounded-xl text-red-700 text-sm">
+              {addUserError}
+            </div>
+          )}
+          
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <input
+              type="email"
+              value={newUserEmail}
+              onChange={(e) => setNewUserEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="Set user password"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+          </div>
+          
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              value={newUserName}
+              onChange={(e) => setNewUserName(e.target.value)}
+              placeholder="User's full name"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          {/* Mentor ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mentor ID</label>
+            <input
+              type="text"
+              value={newUserMentorId}
+              onChange={(e) => setNewUserMentorId(e.target.value)}
+              placeholder="e.g., MENTOR0001"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          {/* Status and Payment Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+              <select
+                value={newUserStatus}
+                onChange={(e) => setNewUserStatus(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+              <select
+                value={newUserPaymentStatus}
+                onChange={(e) => setNewUserPaymentStatus(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => {
+                setShowAddUserModal(false)
+                setAddUserError('')
+              }}
+              className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddUser}
+              disabled={actionLoading || !newUserEmail || !newUserPassword}
+              className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-medium text-white disabled:opacity-50"
+            >
+              {actionLoading ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
         </div>
       </Modal>
     </DashboardLayout>

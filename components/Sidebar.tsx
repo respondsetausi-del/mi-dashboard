@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, Users, UserCog, Key, Send, Bell, 
-  Palette, LogOut, ChevronRight, Settings, FileText, Building2
+  Palette, LogOut, ChevronRight, Settings, FileText, Building2, Mail
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ const adminMenuItems = [
   { name: 'Brokers', icon: Building2, path: '/admin/brokers' },
   { name: 'Send Signal', icon: Send, path: '/admin/signals' },
   { name: 'Send News', icon: Bell, path: '/admin/news' },
+  { name: 'Email Center', icon: Mail, path: '/admin/email' },
 ]
 
 const mentorMenuItems = [
